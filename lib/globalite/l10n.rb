@@ -156,14 +156,8 @@ module Globalite
             localized =  @@locales[t_locale][key] || error_msg
           end  
         end
-      end  
-      localized = interpolate_string(localized.dup, args.dup) if localized.class == String && localized != error_msg
-      
-      # let's handle pluralization if needed
-      # the translation must include pluralize{count, singular string} to be translated
-      # the translator can also pass the plural form if needed:
-      #    pluralize{3, goose, geese}
-      localized = localized.gsub( /pluralize\{(.*?)\}/){ |erb| pluralize(Regexp.last_match(1)) } if localized.is_a?(String) && (localized=~ /pluralize\{(.*)\}/)
+      end
+      localized = deep_interpolate(localized.dup, error_msg, args)
       
       # Set the locale back to normal
       #
@@ -174,6 +168,24 @@ module Globalite
       return localized
     end
     alias :loc :localize
+    
+    def deep_interpolate(localized, error_msg, args)
+      if localized.kind_of?(Hash)
+        # If we've got a hash - we should dig into it and interpolate each of it's strings
+        localized.each_pair do |key,locstring|
+          localized[key] = deep_interpolate(locstring, error_msg, args)
+        end
+      else
+        localized = interpolate_string(localized.dup, args.dup) if localized.class == String && localized != error_msg
+      
+        # let's handle pluralization if needed
+        # the translation must include pluralize{count, singular string} to be translated
+        # the translator can also pass the plural form if needed:
+        #    pluralize{3, goose, geese}
+        localized = localized.gsub( /pluralize\{(.*?)\}/){ |erb| pluralize(Regexp.last_match(1)) } if localized.is_a?(String) && (localized=~ /pluralize\{(.*)\}/)
+      end
+      localized
+    end
 
     def localize_with_args(key, args={})
       localize(key, '_localization missing_', args)

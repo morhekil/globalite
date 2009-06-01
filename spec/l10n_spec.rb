@@ -223,6 +223,10 @@ describe "a localization key (in general)" do
     :many_args_test.l_with_args({:name => 'Matt', :what => 'déchire', :other => 'Serieusement'}).should == 'Serieusement, Matt vraiment déchire comme une bete ;)'
   end
   
+  it "should localize keys nested into an array" do
+    :manystrings.l_with_args({:param => 'globalite'})['parametrized'].should == 'globalite is here'
+  end
+  
   it "should handle localizated pluralization properly" do
     Globalite.current_language = :fr
     :simple_pluralization.l.should == "2 erreurs"
